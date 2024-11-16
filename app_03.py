@@ -4,20 +4,20 @@ import streamlit as st
 import time
 from dotenv import load_dotenv
 
+# Ensure set_page_config is first
+st.set_page_config(page_title="Lestari Bahasa Translator", layout="wide")
+
 # Load environment variables
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Define your model ID
 MODEL_ID = "ft:gpt-4o-2024-08-06:personal:fic-lestari-bahasa-01:ANtvR3xr"
 
 def main():
-    st.set_page_config(page_title="Lestari Bahasa Translator", layout="wide")
     st.title("LESTARI BAHASA - Translator")
 
     user_input = st.text_input("Type your message to translate to Bahasa Sunda:")
 
-    # Translation function with specific tone
     def translate_to_bahasa_sunda(tone):
         if user_input:
             translation_request = f"Translate this message to '{tone}' Bahasa Sunda: {user_input}"
