@@ -10,7 +10,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def main():
     st.set_page_config(page_title="Deskripsi Image", layout="wide")
-    st.title("AI Image Description Generator")
+    st.title("Deskripsi Image")
     st.write("Upload an image and provide some context to get a detailed AI-generated description.")
 
     # Check if the OpenAI API key is set
