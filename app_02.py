@@ -1,50 +1,69 @@
 import os
 import openai
+import pytesseract
+from PIL import Image
 import streamlit as st
 from dotenv import load_dotenv
-from utils import get_image_description
+from utils import get_image_description  # Use this for detailed descriptions
 
 # Ensure set_page_config is first
-st.set_page_config(page_title="Deskripsi Image", layout="wide")
+st.set_page_config(page_title="Image Description & OCR", layout="wide")
 
 # Load environment variables
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def main():
-    st.title("Deskripsi Image dengan lestari Bahasa")
-    st.write("Upload an image...")
+    st.title("Image Description and OCR with GPT-4")
+    st.write("Upload an image to get a detailed description and read any text within the image.")
 
-    api_key = st.text_input("Enter your OpenAI API key", type="password")
-    if not api_key:
-        api_key = os.environ.get("OPENAI_API_KEY", "")
+    # Check if the API key is set
+    if not openai.api_key:
+        st.error("OpenAI API key not found. Please check the .env file or environment variables.")
+        return
 
-    if api_key:
-        # Assign the API key
-        openai.api_key = api_key
+    # Textbox for entering a prompt for image description
+    prompt = st.text_input("Enter a prompt for the image description", "Describe this image in detail.")
 
-        # Dropdown for selecting the model
-        model_choice = st.selectbox("Select the model", ["gpt-4o", "ft:gpt-4o-2024-08-06:personal:fic-lestari-bahasa-01:ANtvR3xr", "gpt-4o-mini"])
+    # Upload image button
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
-        # Textbox for updating the prompt
-        prompt = st.text_input("Enter the prompt for image description", "What’s in this image?")
+    if uploaded_file is not None:
+        # Display the uploaded image
+        st.image(uploaded_file, caption='Uploaded Image', use_column_width=True)
 
-        # Upload image button
-        uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+        # Perform OCR to extract text from the image
+        image = Image.open(uploaded_file)
+        extracted_text = pytesseract.image_to_string(image)
+        if extracted_text:
+            st.subheader("Extracted Text from Image")
+            st.write(extracted_text)
+        else:
+            st.write("No readable text found in the image.")
 
-        if uploaded_file is not None:
-            try:
-                # Display the uploaded image
-                st.image(uploaded_file, caption='Uploaded Image.', use_column_width=True)
-                st.write("Classifying...")
+        # Generate a detailed description using OpenAI
+        try:
+            # Initial prompt for image description
+            description_prompt = f"{prompt} Here is the text extracted from the image if relevant: '{extracted_text}'. Provide a detailed description in over 500 words."
 
-                # Get the image description
-                description = get_image_description(openai, uploaded_file, prompt, model_choice)
-                st.write(description)
-            except Exception as e:
-                st.error(f"Error: {e}")
-    else:
-        st.error("Please provide a valid OpenAI API key.")
+            response = openai.ChatCompletion.create(
+                model="gpt-4",  # Use gpt-4 or any available model
+                messages=[
+                    {"role": "system", "content": "You are an advanced image description model and expert in detailed narratives."},
+                    {"role": "user", "content": description_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=2048  # Allows for a longer response
+            )
+
+            # Display the detailed description
+            detailed_description = response['choices'][0]['message']['content']
+            st.subheader("Detailed Image Description")
+            st.write(detailed_description)
+
+        except Exception as e:
+            st.error(f"Error: {e}")
+
 
 
 
