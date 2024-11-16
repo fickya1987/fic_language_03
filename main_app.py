@@ -9,7 +9,7 @@ page = st.sidebar.radio("Select a page:", ["Chat Assistant", "Deskripsi Image", 
 # Load the selected page
 if page == "Chat Assistant":
     app_01.main()
-elif page == "Image Description":
+elif page == "Deskripsi Image":
     app_02.main()
 elif page == "Bahasa Sunda Translator":
     app_03.main()
