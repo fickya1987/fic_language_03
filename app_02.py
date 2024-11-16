@@ -1,66 +1,30 @@
 import os
-import openai
 import streamlit as st
-import time
-from dotenv import load_dotenv
+from openai import OpenAI
+import base64
+from utils import get_image_description
 
-# Load environment variables
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+def main():
+    st.title("Image Description using GPT-4o and GPT-4o Mini")
+    st.write("Upload an image and get a description using GPT-4o or GPT-4o Mini.")
 
-# Define your model ID
-MODEL_ID = "ft:gpt-4o-2024-08-06:personal:fic-lestari-bahasa-01:ANtvR3xr"
+    api_key = st.text_input("Enter your OpenAI API key", type="password")
+    if not api_key:
+        api_key = os.environ.get("OPENAI_API_KEY", "")
 
-# Streamlit UI setup
-st.set_page_config(page_title="Lestari Bahasa Chat Assistant", layout="wide")
-st.title("LESTARI BAHASA")
+    if api_key:
+        client = OpenAI(api_key=api_key)
+        model_choice = st.selectbox("Select the model", ["gpt-4o", "ft:gpt-4o-2024-08-06:personal:fic-lestari-bahasa-01:ANtvR3xr", "gpt-4o-mini"])
+        prompt = st.text_input("Enter the prompt for image description", "What’s in this image?")
+        uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
-# User input
-user_input = st.text_input("Type your message to translate to Bahasa Sunda:")
-
-# Translation function with specific tone
-def translate_to_bahasa_sunda(tone):
-    if user_input:
-        # Instruction for the translation tone, specific and isolated
-        translation_request = f"Translate this message to '{tone}' Bahasa Sunda: {user_input}"
-
-        try:
-            response = openai.ChatCompletion.create(
-                model=MODEL_ID,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Kamu adalah ahli bahasa sunda dan dapat melakukan translasi berbagai bahasa dunia ke dalam bahasa Sunda. Kamu juga ahli dalam melakukan translasi bahasa sunda alus dan bahasa sunda kasar. Kamu dapat membedakan bahasa Sunda alus dan yang kasar."
-                    },
-                    {
-                        "role": "user",
-                        "content": translation_request
-                    }
-                ],
-                temperature=1,
-                max_tokens=2048,
-                top_p=1,
-                frequency_penalty=0,
-                presence_penalty=0
-            )
-
-            # Access the content correctly from response
-            assistant_response = response["choices"][0]["message"]["content"]
-            if tone == "Sunda Alus":
-                st.session_state.sunda_alus_response = assistant_response
-                st.write(f"**Lestari Bahasa (Sunda Alus)**: {assistant_response}")
-            else:
-                st.session_state.sunda_kasar_response = assistant_response
-                st.write(f"**Lestari Bahasa (Sunda Kasar)**: {assistant_response}")
-
-        except Exception as e:
-            st.error(f"Error: {e}")
-
-# Action buttons with a slight delay to avoid context collision
-if st.button("Sunda Alus"):
-    translate_to_bahasa_sunda("Sunda Alus")
-    time.sleep(1)  # Adding a delay to allow API to reset
-
-if st.button("Sunda Kasar"):
-    translate_to_bahasa_sunda("Sunda Kasar")
-    time.sleep(1)  # Adding a delay to allow API to reset
+        if uploaded_file is not None:
+            try:
+                st.image(uploaded_file, caption='Uploaded Image.', use_column_width=True)
+                st.write("Classifying...")
+                description = get_image_description(client, uploaded_file, prompt, model_choice)
+                st.write(description)
+            except Exception as e:
+                st.error(f"Error: {e}")
+    else:
+        st.error("Please provide a valid OpenAI API key.")
