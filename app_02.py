@@ -12,15 +12,15 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def main():
-    st.title("Image Description using GPT-4o and GPT-4o Mini")
-    st.write("Upload an image and get a description using GPT-4o or GPT-4o Mini.")
+    st.title("Deskripsi Image dengan Lestari Bahasa")
+    st.write("Upload an image")
 
     api_key = st.text_input("Enter your OpenAI API key", type="password")
     if not api_key:
         api_key = os.environ.get("OPENAI_API_KEY", "")
 
     if api_key:
-        model_choice = st.selectbox("Select the model", ["gpt-4o", "ft:gpt-4o-2024-08-06:personal:fic-lestari-bahasa-01:ANtvR3xr", "gpt-4o-mini"])
+        model_choice = st.selectbox("Select the model", ["ft:gpt-4o-2024-08-06:personal:fic-lestari-bahasa-01:ANtvR3xr"])
         prompt = st.text_input("Enter the prompt for image description", "What’s in this image?")
         uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
