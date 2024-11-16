@@ -2,49 +2,69 @@ import os
 import openai
 import streamlit as st
 from dotenv import load_dotenv
-from utils import get_image_description
-
-# Ensure set_page_config is first
-st.set_page_config(page_title="Deskripsi Image", layout="wide")
+from PIL import Image
 
 # Load environment variables
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# Set Streamlit configuration
+st.set_page_config(page_title="Deskripsi Image", layout="wide")
+
 def main():
-    st.title("Deskripsi Image dengan lestari Bahasa")
-    st.write("Upload an image...")
+    st.title("Deskripsi dan Terjemahan Gambar dengan Lestari Bahasa")
+    st.write("Unggah gambar dan berikan konteksnya untuk mendapatkan deskripsi AI dalam bahasa Sunda dan terjemahannya dalam bahasa Indonesia.")
 
-    api_key = st.text_input("Enter your OpenAI API key", type="password")
-    if not api_key:
-        api_key = os.environ.get("OPENAI_API_KEY", "")
+    # Check if the OpenAI API key is set
+    if not openai.api_key:
+        st.error("Kunci API OpenAI tidak ditemukan. Silakan periksa file .env atau variabel lingkungan.")
+        return
 
-    if api_key:
-        # Assign the API key
-        openai.api_key = api_key
+    # Upload image
+    uploaded_file = st.file_uploader("Pilih gambar...", type=["jpg", "jpeg", "png"])
 
-        # Dropdown for selecting the model
-        model_choice = st.selectbox("Select the model", ["gpt-4o", "ft:gpt-4o-2024-08-06:personal:fic-lestari-bahasa-01:ANtvR3xr", "gpt-4o-mini"])
+    # Prompt for image context
+    image_context = st.text_input(
+        "Masukkan konteks atau deskripsi singkat tentang gambar ini (contoh: 'pantai dengan ombak besar dan langit mendung')",
+        "Gambarkan gambar ini secara mendetail."
+    )
 
-        # Textbox for updating the prompt
-        prompt = st.text_input("Enter the prompt for image description", "What’s in this image?")
+    if uploaded_file is not None:
+        # Display the uploaded image
+        st.image(uploaded_file, caption="Gambar yang diunggah", use_column_width=True)
 
-        # Upload image button
-        uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+        # Generate detailed description using OpenAI
+        try:
+            # Prepare the prompt with user input as context for AI
+            description_prompt = (
+                f"Berdasarkan konteks gambar: '{image_context}', deskripsikan gambar ini secara detail dalam 10 kalimat berbahasa Sunda. "
+                "Tambahkan juga terjemahan dalam bahasa Indonesia."
+            )
 
-        if uploaded_file is not None:
-            try:
-                # Display the uploaded image
-                st.image(uploaded_file, caption='Uploaded Image.', use_column_width=True)
-                st.write("Classifying...")
+            response = openai.ChatCompletion.create(
+                model="ft:gpt-4o-2024-08-06:personal:fic-lestari-bahasa-01:ANtvR3xr",  # Replace with your model ID
+                messages=[
+                    {"role": "system", "content": "Anda adalah model AI yang dapat memberikan deskripsi mendetail dalam bahasa Sunda dengan terjemahan bahasa Indonesia."},
+                    {"role": "user", "content": description_prompt}
+                ],
+                temperature=1,
+                max_tokens=2048,
+                top_p=1,
+                frequency_penalty=0,
+                presence_penalty=0
+            )
 
-                # Get the image description
-                description = get_image_description(openai, uploaded_file, prompt, model_choice)
-                st.write(description)
-            except Exception as e:
-                st.error(f"Error: {e}")
-    else:
-        st.error("Please provide a valid OpenAI API key.")
+            # Display the generated description and translation
+            detailed_description = response['choices'][0]['message']['content']
+            st.subheader("Deskripsi AI dalam Bahasa Sunda dan Terjemahan Bahasa Indonesia")
+            st.write(detailed_description)
+
+        except Exception as e:
+            st.error(f"Terjadi kesalahan: {e}")
+
+# Run the main function if the script is executed
+if __name__ == "__main__":
+    main()
 
 
 
