@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from utils import get_image_description
 
 # Ensure set_page_config is first
-st.set_page_config(page_title="Image Description", layout="wide")
+st.set_page_config(page_title="Deskripsi Image", layout="wide")
 
 # Load environment variables
 load_dotenv()
