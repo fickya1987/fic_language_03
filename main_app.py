@@ -3,8 +3,8 @@ import app_01
 import app_02
 import app_03
 
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Select a page:", ["Chat Assistant", "Image Description", "Bahasa Sunda Translator"])
+st.sidebar.title("Pilihan Fitur")
+page = st.sidebar.radio("Select a page:", ["Chat Assistant", "Deskripsi Image", "Bahasa Sunda Translator"])
 
 # Load the selected page
 if page == "Chat Assistant":
