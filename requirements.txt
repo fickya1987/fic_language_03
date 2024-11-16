@@ -1,4 +1,5 @@
 streamlit
 openai==0.28
 python-dotenv
-Pillow  # For image handling in Streamlit
+pytesseract
+Pillow
