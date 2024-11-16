@@ -1,42 +1,61 @@
 import os
+import openai
 import streamlit as st
-from openai import OpenAI
-import base64
-from utils import get_image_description
+from dotenv import load_dotenv
 
-# Streamlit app layout
-st.title("Image Description using GPT-4o and GPT-4o Mini")
-st.write("Upload an image and get a description using GPT-4o or GPT-4o Mini.")
+# Load environment variables
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Textbox for updating OpenAI API key
-api_key = st.text_input("Enter your OpenAI API key", type="password")
-if not api_key:
-    api_key = os.environ.get("OPENAI_API_KEY", "")
+# Define your model ID
+MODEL_ID = "ft:gpt-4o-2024-08-06:personal:fic-lestari-bahasa-01:ANtvR3xr"
 
-if api_key:
-    # Initialize the OpenAI client
-    client = OpenAI(api_key=api_key)
+def main():
+    st.set_page_config(page_title="Chat Assistant", layout="wide")
+    st.title("LESTARI BAHASA - Chat Assistant")
 
-    # Dropdown for selecting the model
-    model_choice = st.selectbox("Select the model", ["gpt-4o", "ft:gpt-4o-2024-08-06:personal:fic-lestari-bahasa-01:ANtvR3xr", "gpt-4o-mini"])
+    # Initialize the message history
+    if "messages" not in st.session_state:
+        st.session_state.messages = [
+            {"role": "system", "content": "You are a helpful Worldwide Translator and Language Expert."}
+        ]
 
-    # Textbox for updating the prompt
-    prompt = st.text_input("Enter the prompt for image description", "What’s in this image?")
+    # Display the chat history
+    for message in st.session_state.messages:
+        if message["role"] == "user":
+            st.write(f"**User**: {message['content']}")
+        else:
+            st.write(f"**Assistant**: {message['content']}")
 
-    # Upload image button
-    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+    # User input
+    user_input = st.text_input("Type your message:")
 
-    if uploaded_file is not None:
-        try:
-            # Display the uploaded image
-            st.image(uploaded_file, caption='Uploaded Image.', use_column_width=True)
-            st.write("")
-            st.write("Classifying...")
-
-            # Get the image description
-            description = get_image_description(client, uploaded_file, prompt, model_choice)
-            st.write(description)
-        except Exception as e:
-            st.error(f"Error: {e}")
-else:
-    st.error("Please provide a valid OpenAI API key.")
+    # Send button functionality
+    if st.button("Send"):
+        if user_input:
+            # Add the user's message to the session state
+            st.session_state.messages.append({"role": "user", "content": user_input})
+            
+            # Call the OpenAI API
+            try:
+                response = openai.ChatCompletion.create(
+                    model=MODEL_ID,
+                    messages=st.session_state.messages,
+                    temperature=1,
+                    max_tokens=2048,
+                    top_p=1,
+                    frequency_penalty=0,
+                    presence_penalty=0
+                )
+                
+                # Retrieve the assistant's response
+                assistant_response = response.choices[0].message['content'].strip()
+                
+                # Add the assistant's response to the session state
+                st.session_state.messages.append({"role": "assistant", "content": assistant_response})
+                
+                # Display the assistant's response
+                st.write(f"**Assistant**: {assistant_response}")
+            
+            except Exception as e:
+                st.error(f"Error: {e}")
