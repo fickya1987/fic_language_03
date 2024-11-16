@@ -1,26 +1,21 @@
-import base64
+import openai
 
-def get_image_description(client, uploaded_file, prompt, model_choice):
-    # Encode the uploaded image in base64
-    encoded_image = base64.b64encode(uploaded_file.getvalue()).decode('utf-8')
+def get_image_description(client, image_file, prompt, model_choice):
+    # Convert the image to base64 if needed, or handle it as required by your model
+    image_data = image_file.read()  # Read the image file
 
-    # Create the GPT-4o or GPT-4o-mini API request
-    response = client.chat.completions.create(
+    # Prepare the prompt and call the OpenAI API with the chosen model
+    response = client.ChatCompletion.create(
         model=model_choice,
         messages=[
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/png;base64,{encoded_image}"}
-                    },
-                ],
-            }
+            {"role": "system", "content": "You are an AI model that describes images."},
+            {"role": "user", "content": prompt}
         ],
-        max_tokens=300,
+        temperature=0.9,
+        max_tokens=1000
     )
 
     # Extract and return the description
-    return response.choices[0].message.content
+    description = response['choices'][0]['message']['content']
+    return description
+
